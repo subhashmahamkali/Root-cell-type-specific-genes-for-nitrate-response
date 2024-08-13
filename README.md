@@ -1,7 +1,7 @@
 # single_cell reveal root cell ype specific genes for nitrate response
 
-This repository is to confirm the root cell type specific genes in maize from published data :- https://doi.org/10.1016/j.cj.2022.02.004
-Li, Xuhui, et al. "Single-cell RNA sequencing reveals the landscape of maize root tips and assists in identification of cell type-specific nitrate-response genes.")
+This repository is to confirm the root cell type specific genes in maize from published data:
+> [Li, et al. 2022](https://doi.org/10.1016/j.cj.2022.02.004) "Single-cell RNA sequencing reveals the landscape of maize root tips and assists in identification of cell type-specific nitrate-response genes.")
 
 This study provides a global view of maize root tip developmental processes and responses to nitrate at single cell level.
 In this publication they profiled transcriptomes of >7000 cells derived from root tips of maize seedlings grown on media with or without nitrate. 
@@ -11,7 +11,7 @@ To assess the robustness of ScRNA-seq and the effect of protoplasting, conventio
 
 In addition they conducted inter species comparison of root cells between maize and rice reveled the conservation and divergence of the root cell types
 
-#cell types identified with number of cells 
+# cell types identified with number of cells 
 
 1) Stele (n=1451)
 2) Cortex (n=2705)
