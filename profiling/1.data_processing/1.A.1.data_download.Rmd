@@ -1,0 +1,37 @@
+---
+title: "Download data from NCBI"
+author: "Jinliang Yang"
+date: "08-13-2024"
+output: NULL
+---
+
+# NCBI meta data
+
+https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE183171
+
+download the data from NCBI. 
+
+GSM5552418	scRNAseq of root tips growing with nitrate
+GSM5552419	scRNAseq of root tips growing without nitrate
+GSM5856951	bulked RNAseq of root tips growning with nitrate replicate 1
+GSM5856952	bulked RNAseq of root tips growning with nitrate replicate 2
+GSM5856953	bulked RNAseq of root tips growning without nitrate replicate 1
+GSM5856954	bulked RNAseq of root tips growning without nitrate replicate 2
+
+## download raw data
+
+the data is downloaded on HCC `/work/jyanglab/jyang21/rootsc`
+
+
+```{bash}
+cd /work/jyanglab/jyang21/rootsc
+
+ml SRAtoolkit
+vdb-config --interactive
+fastq-dump SRR15686117
+fastq-dump --split-files --gzip SRR15686117
+fastq-dump --split-files --gzip ERR8093245
+```
+
+# processed data are in supplementary files
+
