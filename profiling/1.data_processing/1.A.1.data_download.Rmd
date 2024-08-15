@@ -1,6 +1,6 @@
 ---
 title: "Download data from NCBI"
-author: "Jinliang Yang"
+author: "Jinliang Yang and subhash"
 date: "08-13-2024"
 output: NULL
 ---
@@ -20,17 +20,47 @@ GSM5856954	bulked RNAseq of root tips growning without nitrate replicate 2
 
 ## download raw data
 
-the data is downloaded on HCC `/work/jyanglab/jyang21/rootsc`
+Both bulk RNAseq and scRNAseq data is downloaded from NCBI under both the treatment conditions with and without nitrate
+bulk RNAseq has 2 replicates under both the conditions
+
+- bulk RNAseq with nitrate: `/work/jyanglab/subhash/3.single_cell_RNA_Seq/1.bulk_RNA_seq/0.1.with_nitrate/`
+- bulk RNAseq without nitrate: `/work/jyanglab/subhash/3.single_cell_RNA_Seq/1.bulk_RNA_seq/0.2.without_nitrate/`
+- scRNAseq with nitrate: `/work/jyanglab/subhash/3.single_cell_RNA_Seq/2.sc_RNASeq/0.1.with_nitrate/`
+- scRNAseq without nitrate: `/work/jyanglab/subhash/3.single_cell_RNA_Seq/2.sc_RNASeq/0.2.without_nitrate/`
 
 
 ```{bash}
-cd /work/jyanglab/jyang21/rootsc
-
 ml SRAtoolkit
-vdb-config --interactive
-fastq-dump SRR15686117
+
+#bulk RNASeq with nitrate rep-1
+fastq-dump --split-files --gzip SRR17859242 
+#bulk RNASeq with nitrate rep-2 
+fastq-dump --split-files --gzip SRR17859243 
+
+#bulk RNASeq without nitrate rep-1
+fastq-dump --split-files --gzip SRR17859244
+#bulk RNASeq without nitrate rep-2
+fastq-dump --split-files --gzip SRR17859245 
+
+#sc_RNASeq with nitrate -63.7G
 fastq-dump --split-files --gzip SRR15686117
-fastq-dump --split-files --gzip ERR8093245
+fastq-dump --split-files --gzip SRR15686118
+fastq-dump --split-files --gzip SRR15686119
+fastq-dump --split-files --gzip SRR15686120
+fastq-dump --split-files --gzip SRR15686121
+fastq-dump --split-files --gzip SRR15686122
+fastq-dump --split-files --gzip SRR15686123
+fastq-dump --split-files --gzip SRR15686124
+
+#sc_RNASeq without nitrate -57.5G
+fastq-dump --split-files --gzip SRR15686125
+fastq-dump --split-files --gzip SRR15686126
+fastq-dump --split-files --gzip SRR15686127
+fastq-dump --split-files --gzip SRR15686128
+fastq-dump --split-files --gzip SRR15686129
+fastq-dump --split-files --gzip SRR15686130
+fastq-dump --split-files --gzip SRR15686131
+fastq-dump --split-files --gzip SRR15686132
 ```
 
 # processed data are in supplementary files
