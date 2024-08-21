@@ -1,0 +1,78 @@
+---
+title: "bulk_RNAseq_analysis"
+author: "subhash"
+date: "2024-08-21"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{bash}
+#!/bin/sh
+#SBATCH --ntasks-per-node=8
+#SBATCH --nodes=1
+#SBATCH --mem=4G
+#SBATCH --time=24:00:00
+#SBATCH --job-name=fastqc
+#SBATCH --mail-user=smahamkalivenkatas2@huskers.unl.edu
+#SBATCH --mail-type=ALL
+#SBATCH --error=/work/jyanglab/subhash/3.single_cell_RNA_Seq/1.bulk_RNA_seq/1.fastq_reports/fastqc.err
+#SBATCH --output=/work/jyanglab/subhash/3.single_cell_RNA_Seq/1.bulk_RNA_seq/1.fastq_reports/fastqc.out
+
+ml fastqc
+Input_path="/work/jyanglab/subhash/3.single_cell_RNA_Seq/1.bulk_RNA_seq/0.1.with_nitrate"
+Input2_path="/work/jyanglab/subhash/3.single_cell_RNA_Seq/1.bulk_RNA_seq/0.2.without_nitrate/"
+out="/work/jyanglab/subhash/3.single_cell_RNA_Seq/1.bulk_RNA_seq/1.fastq_reports/"
+
+fastqc ${Input_path}/SRR17859242_1.fastq.gz ${Input_path}/SRR17859242_2.fastq.gz ${Input_path}/SRR17859243_1.fastq.gz ${Input_path}/SRR17859243_2.fastq.gz ${Input2_path}/SRR17859244_1.fastq.gz ${Input2_path}/SRR17859244_2.fastq.gz ${Input2_path}/SRR17859245_1.fastq.gz ${Input2_path}/SRR17859245_2.fastq.gz -o ${out}
+```
+
+
+
+```{bash}
+#!/bin/sh
+#SBATCH --ntasks-per-node=8
+#SBATCH --nodes=1
+#SBATCH --mem=16G
+#SBATCH --time=24:00:00
+#SBATCH --job-name=trimmomatic
+#SBATCH --mail-user=smahamkalivenkatas2@huskers.unl.edu
+#SBATCH --mail-type=ALL
+#SBATCH --error=/work/jyanglab/subhash/3.single_cell_RNA_Seq/1.bulk_RNA_seq/2.trimmomatic/0.scripts/trim.err
+#SBATCH --output=/work/jyanglab/subhash/3.single_cell_RNA_Seq/1.bulk_RNA_seq/2.trimmomatic/0.scripts/trim.out
+
+ml trimmomatic
+ml fastqc
+
+input1="/work/jyanglab/subhash/3.single_cell_RNA_Seq/1.bulk_RNA_seq/0.1.with_nitrate/"
+input2="/work/jyanglab/subhash/3.single_cell_RNA_Seq/1.bulk_RNA_seq/0.2.without_nitrate/"
+out="/work/jyanglab/subhash/3.single_cell_RNA_Seq/1.bulk_RNA_seq/2.trimmomatic/"
+samples1=("SRR17859242" "SRR17859243")
+samples2=("SRR17859244" "SRR17859245")
+out2="/work/jyanglab/subhash/3.single_cell_RNA_Seq/1.bulk_RNA_seq/2.trimmomatic/0.1_fatqc_trimmed/"
+
+#loop
+
+for sample in "${samples1[@]}"; do
+java -jar $TM_HOME/trimmomatic.jar PE -threads 8 -phred33 \
+${input1}${sample}_1.fastq.gz ${input1}${sample}_2.fastq.gz \
+${out}${sample}_1_trimmed_paired.fastq.gz ${out}${sample}_1_trimmed_unpaired.fastq.gz \
+${out}${sample}_2_trimmed_paired.fastq.gz ${out}${sample}_2_trimmed_unpaired.fastq.gz \
+TRAILING:10
+done
+
+for sample in "${samples2[@]}"; do
+java -jar $TM_HOME/trimmomatic.jar PE -threads 8 -phred33 \
+${input2}${sample}_1.fastq.gz ${input2}${sample}_2.fastq.gz \
+${out}${sample}_1_trimmed_paired.fastq.gz ${out}${sample}_1_trimmed_unpaired.fastq.gz \
+${out}${sample}_2_trimmed_paired.fastq.gz ${out}${sample}_2_trimmed_unpaired.fastq.gz \
+TRAILING:10
+done
+
+fastqc ${out}/*_trimmed_paired.fastq.gz -o ${out2}
+
+```
+
