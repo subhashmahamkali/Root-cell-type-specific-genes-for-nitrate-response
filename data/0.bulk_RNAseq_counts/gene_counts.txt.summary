@@ -1,0 +1,15 @@
+Status	/work/jyanglab/subhash/3.single_cell_RNA_Seq/1.bulk_RNA_seq/4.alignmend_files/SRR17859242_sorted.bam	/work/jyanglab/subhash/3.single_cell_RNA_Seq/1.bulk_RNA_seq/4.alignmend_files/SRR17859243_sorted.bam	/work/jyanglab/subhash/3.single_cell_RNA_Seq/1.bulk_RNA_seq/4.alignmend_files/SRR17859244_sorted.bam	/work/jyanglab/subhash/3.single_cell_RNA_Seq/1.bulk_RNA_seq/4.alignmend_files/SRR17859245_sorted.bam
+Assigned	43557723	50000549	51737477	38992129
+Unassigned_Unmapped	1574335	1818803	1621537	1617944
+Unassigned_Read_Type	0	0	0	0
+Unassigned_Singleton	0	0	0	0
+Unassigned_MappingQuality	0	0	0	0
+Unassigned_Chimera	0	0	0	0
+Unassigned_FragmentLength	0	0	0	0
+Unassigned_Duplicate	0	0	0	0
+Unassigned_MultiMapping	11205114	7893028	5924078	4147709
+Unassigned_Secondary	0	0	0	0
+Unassigned_NonSplit	0	0	0	0
+Unassigned_NoFeatures	1934801	2182233	1939482	1568049
+Unassigned_Overlapping_Length	0	0	0	0
+Unassigned_Ambiguity	1877483	2045835	1987160	1556394
