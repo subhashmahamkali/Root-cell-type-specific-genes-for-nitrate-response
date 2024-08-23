@@ -76,3 +76,61 @@ fastqc ${out}/*_trimmed_paired.fastq.gz -o ${out2}
 
 ```
 
+```{bash}
+#!/bin/sh
+#SBATCH --ntasks-per-node=8
+#SBATCH --nodes=1
+#SBATCH --mem=16G
+#SBATCH --time=80:00:00
+#SBATCH --job-name=alignment
+#SBATCH --mail-user=smahamkalivenkatas2@huskers.unl.edu
+#SBATCH --mail-type=ALL
+#SBATCH --error=/work/jyanglab/subhash/3.single_cell_RNA_Seq/1.bulk_RNA_seq/4.alignmend_files/0.scripts/align.err
+#SBATCH --output=/work/jyanglab/subhash/3.single_cell_RNA_Seq/1.bulk_RNA_seq/4.alignmend_files/0.scripts/align.out
+
+ml hisat2
+ml samtools
+
+input="/work/jyanglab/subhash/3.single_cell_RNA_Seq/1.bulk_RNA_seq/2.trimmomatic/"
+samples=("SRR17859242" "SRR17859243" "SRR17859244" "SRR17859245")
+aligned_out="/work/jyanglab/subhash/3.single_cell_RNA_Seq/1.bulk_RNA_seq/4.alignmend_files/"
+ref="/work/jyanglab/subhash/3.single_cell_RNA_Seq/1.bulk_RNA_seq/3.refrence_genome/0.scripts/"
+
+for sample in "${samples[@]}"; do
+  hisat2 -p 8 -x ${ref}/maize_index -1 ${input}${sample}_1_trimmed_paired.fastq.gz -2 ${input}${sample}_2_trimmed_paired.fastq.gz | \
+  samtools view -bS - | samtools sort -o ${aligned_out}${sample}_sorted.bam
+done
+
+#SRR17859242: 96.98% overall alignment rate
+#SRR17859243: 96.89% overall alignment rate
+#SRR17859244: 97.27% overall alignment rate
+#SRR17859245: 96.42% overall alignment rate
+```
+
+
+
+```{bash}
+#!/bin/sh
+#SBATCH --ntasks-per-node=8
+#SBATCH --nodes=1
+#SBATCH --mem=16G
+#SBATCH --time=80:00:00
+#SBATCH --job-name=read_counts
+#SBATCH --mail-user=smahamkalivenkatas2@huskers.unl.edu
+#SBATCH --mail-type=ALL
+#SBATCH --error=/work/jyanglab/subhash/3.single_cell_RNA_Seq/1.bulk_RNA_seq/5.read_counts/0.scripts/rc.err
+#SBATCH --output=/work/jyanglab/subhash/3.single_cell_RNA_Seq/1.bulk_RNA_seq/5.read_counts/0.scripts/rc.out
+
+ml subread
+
+aligned="/work/jyanglab/subhash/3.single_cell_RNA_Seq/1.bulk_RNA_seq/4.alignmend_files/"
+rc_out="/work/jyanglab/subhash/3.single_cell_RNA_Seq/1.bulk_RNA_seq/5.read_counts/"
+annotation="/work/jyanglab/subhash/3.single_cell_RNA_Seq/1.bulk_RNA_seq/3.refrence_genome/Phytozome/PhytozomeV13/Zmays/Zm-B73-REFERENCE-NAM-5.0.55/annotation/Zmays_833_Zm-B73-REFERENCE-NAM-5.0.55.gene.gff3"
+
+featureCounts -T 8 -a $annotation -o ${rc_out}gene_counts.txt \
+${aligned}SRR17859242_sorted.bam \
+${aligned}SRR17859243_sorted.bam \
+${aligned}SRR17859244_sorted.bam \
+${aligned}SRR17859245_sorted.bam
+```
+
