@@ -7,8 +7,11 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir=normalizePath('/Users/subhashmahamkali/Documents/scRNAseq')) 
 ```
 
+
+# checking the quality of bulk RNA-seq files
 
 ```{bash}
 #!/bin/sh
@@ -30,7 +33,7 @@ out="/work/jyanglab/subhash/3.single_cell_RNA_Seq/1.bulk_RNA_seq/1.fastq_reports
 fastqc ${Input_path}/SRR17859242_1.fastq.gz ${Input_path}/SRR17859242_2.fastq.gz ${Input_path}/SRR17859243_1.fastq.gz ${Input_path}/SRR17859243_2.fastq.gz ${Input2_path}/SRR17859244_1.fastq.gz ${Input2_path}/SRR17859244_2.fastq.gz ${Input2_path}/SRR17859245_1.fastq.gz ${Input2_path}/SRR17859245_2.fastq.gz -o ${out}
 ```
 
-
+## trimming the low quality reads and any adapter sequences with phred score of 33 and generating the fastqc reports to visualize the quality
 
 ```{bash}
 #!/bin/sh
@@ -76,6 +79,9 @@ fastqc ${out}/*_trimmed_paired.fastq.gz -o ${out2}
 
 ```
 
+
+### aligning the filtered reads with the refrence genome using hisat2.
+
 ```{bash}
 #!/bin/sh
 #SBATCH --ntasks-per-node=8
@@ -107,7 +113,7 @@ done
 #SRR17859245: 96.42% overall alignment rate
 ```
 
-
+#### generating the gene count matrix using feauture counts from aligned .bam files
 
 ```{bash}
 #!/bin/sh
@@ -132,5 +138,97 @@ ${aligned}SRR17859242_sorted.bam \
 ${aligned}SRR17859243_sorted.bam \
 ${aligned}SRR17859244_sorted.bam \
 ${aligned}SRR17859245_sorted.bam
+```
+
+
+##### using DEseq2 to generate and visulaize the differential expressed genes between nitrate and without nitrate conditions
+
+```{r}
+#if (!require("BiocManager", quietly = TRUE))
+    #install.packages("BiocManager")
+#BiocManager::install("DESeq2")
+
+library(DESeq2)
+library(tidyverse)
+
+count_data = read.table("data/0.bulk_RNAseq_counts/gene_counts.txt", header = T, row.names = 1)
+#39,756 genes
+colnames(count_data)
+
+#changing the column names
+colnames(count_data) [colnames(count_data) == "X.work.jyanglab.subhash.3.single_cell_RNA_Seq.1.bulk_RNA_seq.4.alignmend_files.SRR17859242_sorted.bam"] = "SRR17859242"
+colnames(count_data) [colnames(count_data) == "X.work.jyanglab.subhash.3.single_cell_RNA_Seq.1.bulk_RNA_seq.4.alignmend_files.SRR17859243_sorted.bam"] = "SRR17859243"
+colnames(count_data) [colnames(count_data) == "X.work.jyanglab.subhash.3.single_cell_RNA_Seq.1.bulk_RNA_seq.4.alignmend_files.SRR17859244_sorted.bam"] = "SRR17859244"
+colnames(count_data) [colnames(count_data) == "X.work.jyanglab.subhash.3.single_cell_RNA_Seq.1.bulk_RNA_seq.4.alignmend_files.SRR17859245_sorted.bam"] = "SRR17859245"
+
+colData = read.csv("data/0.bulk_RNAseq_counts/exp.csv", row.names = 1)
+count_data = count_data[, -c(1:5)]
+
+#count_data$Geneid = gsub("\\.Zm_B73_REFERENCE_NAM_5\\.0\\.55", "", count_data$Geneid)
+
+
+# making sure the row names in colData matches to column names in count_data
+all(colnames(count_data) %in% rownames(colData))
+# are they in the same order?
+all(colnames(count_data) == rownames(colData))
+
+
+# Step 2: construct a DESeqDataSet object ----------
+dds <- DESeqDataSetFromMatrix(countData = count_data,
+                       colData = colData,
+                       design = ~ nitrate)
+
+dds
+
+
+# Get the count matrix from the DESeqDataSet object
+# pre-filtering: removing rows with low gene counts
+# keeping rows that have at least 10 reads total
+
+count_matrix <- counts(dds)
+keep <- rowSums(count_matrix) >= 10
+dds <- dds[keep, ]
+
+# set the factor level - comparing nitrate treated with nitrate untreated
+dds$nitrate <- relevel(dds$nitrate, ref = "untreated")
+dds$nitrate
+
+
+# Step 3: Run DESeq ----------------------
+dds <- DESeq(dds)
+res <- results(dds)
+res
+
+#log2 fold change (MLE): nitrate treated vs untreated 
+#basemean - avg of counts taken over all samples
+#log2foldchange - fold change of gene in treated vs unreated (+:up in treated)
+#padj - corrected p value for multiple testing
+
+# Explore Results ----------------
+summary(res)
+#26,815 genes after filtering
+
+res0.05 <- results(dds, alpha = 0.05)
+summary(res0.05)
+
+res_filtered <- res0.05[which(res0.05$padj <= 0.05 & abs(res0.05$log2FoldChange) >= 1), ]
+summary(res_filtered)
+
+
+# contrasts- making sure the comparision
+resultsNames(dds)
+results(dds, contrast = c("nitrate", "treated", "untreated"))
+
+# MA plot - scatterplot between log2foldchange and mean of normalized counts
+plotMA(res_filtered) 
+#genes colored in blue are significant DEGs with padj of 0.05 and foldchange > 1
+
+ 
+pdf(file = "graphs/MA_plot_DEGs.pdf", width = 8, height = 6)
+par(cex.lab = 1.5, font.lab = 2, font.main = 2)
+plotMA(res_filtered)
+title(main = "DEGs between nitrate and without nitrate conditions")
+dev.off()
+
 ```
 
