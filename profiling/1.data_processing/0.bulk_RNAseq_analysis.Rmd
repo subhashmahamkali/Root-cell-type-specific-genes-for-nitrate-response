@@ -213,14 +213,14 @@ summary(res0.05)
 
 res_filtered <- res0.05[which(res0.05$padj <= 0.05 & abs(res0.05$log2FoldChange) >= 1), ]
 summary(res_filtered)
-
+#513 DEGS in total.
 
 # contrasts- making sure the comparision
 resultsNames(dds)
 results(dds, contrast = c("nitrate", "treated", "untreated"))
 
 # MA plot - scatterplot between log2foldchange and mean of normalized counts
-plotMA(res_filtered) 
+#plotMA(res_filtered) 
 #genes colored in blue are significant DEGs with padj of 0.05 and foldchange > 1
 
  
@@ -230,5 +230,16 @@ plotMA(res_filtered)
 title(main = "DEGs between nitrate and without nitrate conditions")
 dev.off()
 
+res_filtered_df <- as.data.frame(res_filtered)
+#res_filtered_df$ = gsub("\\.Zm_B73_REFERENCE_NAM_5\\.0\\.55", "", count_data$Geneid)
+write.csv(res_filtered_df, file = "data/0.bulk_RNAseq_counts/DEGs.csv", row.names = TRUE)
+#write.table(res_filtered_df, file = "data/0.bulk_RNAseq_counts/res_filtered.txt", sep = "\t", row.names = TRUE)
+upregulated_genes <- sum(res_filtered$log2FoldChange > 1)
+upregulated_genes
+#229 genes
+downregulated_genes <- sum(res_filtered$log2FoldChange < -1)
+downregulated_genes
+#284 genes
 ```
+
 
