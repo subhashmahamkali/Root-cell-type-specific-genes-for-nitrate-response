@@ -30,6 +30,8 @@ bulk RNAseq has 2 replicates under both the conditions
 
 
 ```{bash}
+cd /work/jyanglab/subhash/3.single_cell_RNA_Seq
+
 ml SRAtoolkit
 
 #bulk RNASeq with nitrate rep-1
