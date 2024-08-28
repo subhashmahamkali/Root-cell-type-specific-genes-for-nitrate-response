@@ -21,7 +21,7 @@ here is the [tutorials](https://www.10xgenomics.com/support/software/cell-ranger
 cd ~/bin/
 wget -O cellranger-8.0.1.tar.gz "https://cf.10xgenomics.com/releases/cell-exp/cellranger-8.0.1.tar.gz?Expires=1723872327&Key-Pair-Id=APKAI7S6A5RYOXBWRPDA&Signature=QMT75~0APN1ylbKNNePQ6cVDlqqkgCAwzdCcX5lsc5v5QBJsMw48x4UHPYJcu8TYRJO7JF1EUkZnrQgNDae8qsUY~~wOLxckFia4gw1chgDOfW96J9ylhpNN0lOaXUy8deeiogn0NFoFMPPX67V-VjZWyJ6vo5hlySaT58sgewghGZPePoJIWXR~o78f1I7AIqOg8gQaP7AfDXROWxcd3nZTswklG1BAmRDMYQnB0zEGYYgvTxjEYDHUpjk3cuE5o7Uz0bldY9Cvw4TF~JdaXEPvH2HsTBBM~7-gZ~AlM4AwWwIM48wxAaHLR8BAxVztpSH~Kv9ftk4DJEk8rAKSjA__"
 
-tar -xvzf cellranger-8.0.1.tar.g
+tar -xvzf cellranger-8.0.1.tar.gz
 
 #export your path to .bashrc or .bash_profile
 
