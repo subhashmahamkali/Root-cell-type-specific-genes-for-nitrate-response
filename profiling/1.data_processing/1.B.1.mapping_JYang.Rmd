@@ -51,11 +51,127 @@ gzip -d Zm-B73-REFERENCE-NAM-5.0_Zm00001eb.1.gff3.gz
 
 # Maize GFF file
 
-
 ```{bash}
 cellranger mkgtf -h
 cellranger mkgtf Zm-B73-REFERENCE-NAM-5.0_Zm00001eb.1.gff3 Zm-B73-REFERENCE-NAM-5.0_gene.gtf --attribute = gene
 ```
 
+## preparing refrence genome
 
+```{bash}
+#converting downloaded .gff3 to .gtf using gffread
+gffread Zm-B73-REFERENCE-NAM-5.0_Zm00001eb.1.gff3 \
+-T -o Zm-B73-REFERENCE-NAM-5.0_Zm00001eb.1.gtf
+
+#creating the index for refrence using cellranger mkgtf tool
+cellranger mkgtf Zm-B73-REFERENCE-NAM-5.0_Zm00001eb.1.gtf \
+Zm-B73-REFERENCE-NAM-5.0_Zm00001eb.1_filtered.gtf \
+--attribute=gene_biotype:protein_coding
+
+```
+
+### alignment to refrence genome and generatig feature count matrix using cell ranger
+In our study we have 2 experimental conditions with_nitrate and without_nitrate
+
+```{bash}
+#!/bin/sh
+#SBATCH --ntasks-per-node=8
+#SBATCH --nodes=1
+#SBATCH --mem=64G
+#SBATCH --time=80:00:00
+#SBATCH --job-name=CR_count_2
+#SBATCH --mail-user=smahamkalivenkatas2@huskers.unl.edu
+#SBATCH --mail-type=ALL
+#SBATCH --error=/work/jyanglab/subhash/3.single_cell_RNA_Seq/2.sc_RNASeq/3.CR_count/2.CR_count_2/0.scripts/2_CR.err
+#SBATCH --output=/work/jyanglab/subhash/3.single_cell_RNA_Seq/2.sc_RNASeq/3.CR_count/2.CR_count_2/0.scripts/2_CR.out
+
+cd /work/jyanglab/subhash/3.single_cell_RNA_Seq/2.sc_RNASeq/3.CR_count/2.CR_count_2/
+
+cellranger count \
+  --id=2_without_nitrate \
+  --transcriptome=/work/jyanglab/subhash/3.single_cell_RNA_Seq/2.sc_RNASeq/2.refrence/Zm_B73 \
+  --fastqs=/work/jyanglab/subhash/3.single_cell_RNA_Seq/2.sc_RNASeq/0.2.without_nitrate/ \
+  --sample=SRR15686125,SRR15686126,SRR15686127,SRR15686128,SRR15686129,SRR15686130,SRR15686131,SRR15686132 \
+  --localcores=8 \
+  --localmem=64 \
+  --create-bam=true
+```
+
+
+
+
+
+
+
+
+
+```{r}
+library(Seurat)
+library(tidyverse)
+
+# Load the NSCLC dataset
+#nsclc.sparse.m <- Read10X_h5(filename = 'filtered_feature_bc_matrix.h5')
+nsclc.sparse.m <- Read10X(data.dir = 'filtered_feature_bc_matrix/')
+str(nsclc.sparse.m)
+
+
+pr1 <- CreateSeuratObject(counts = nsclc.sparse.m, project = "pr1", min.cells = 3, min.features = 200)
+class(pr1) #seurat object
+pr1
+#An object of class Seurat 
+#24225 features across 2777 samples within 1 assay 
+#Active assay: RNA (24225 features, 0 variable features)
+
+colnames(pr1[]) #barcodes
+rownames(pr1[]) #genes
+
+view(pr1)
+view(pr1@meta.data)
+#barcode,#projectname,#ncount_RNA,nfeature_RNA
+
+#save seurat object
+saveRDS(pr1, file="/Users/subhashmahamkali/Desktop/pr1.RDS")
+#pr1 <- readRDS("/Users/subhashmahamkali/Desktop/pr1.RDS")
+#pr1
+
+
+#vid-3
+merged <- merge(pr1, y = c(pr2),
+                add.cell.ids = ls()[1:2],
+                project = 'merged')
+  
+
+#quality control and selecting cells fro further analysis
+#data normalization
+
+range(pr1$nFeature_RNA)
+range(pr1$nCount_RNA)
+
+#store mitovhondrial percentage in object meta data (percentahe pf mitochroa genes for each cell.)
+
+
+pr1 <- PercentageFeatureSet(pr1, pattern = "^MT-", col.name = "percent.mt")
+
+view(pr1@meta.data)
+range(pr1$percent.mt)
+str(pr1)
+
+library(rtracklayer)
+library(Seurat)
+
+
+# Install and load the rtracklayer package
+if (!requireNamespace("BiocManager", quietly = TRUE)) {
+    install.packages("BiocManager")
+}
+
+BiocManager::install("rtracklayer")
+library(rtracklayer)
+
+mito_genes <- gtf[grepl("mitochondrial", mcols(gtf)$gene_biotype, ignore.case = TRUE)]
+mito_gene_ids <- mcols(mito_genes)$gene_id
+pr1[["percent.mt"]] <- PercentageFeatureSet(pr1, features = mito_gene_ids)
+
+view(pr1@meta.data)
+```
 
