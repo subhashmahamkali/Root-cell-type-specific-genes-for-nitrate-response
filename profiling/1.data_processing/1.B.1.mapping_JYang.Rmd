@@ -100,6 +100,11 @@ cellranger count \
 ```
 
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir=normalizePath('/Users/subhashmahamkali/Documents/Root-cell-type-specific-genes-for-nitrate-response/')) 
+```
+
 
 
 
@@ -108,160 +113,15 @@ cellranger count \
 #testing seurat package pipeline workflow
 
 ```{r}
-library(Seurat)
-library(tidyverse)
-
-# Load the NSCLC dataset
-#nsclc.sparse.m <- Read10X_h5(filename = 'filtered_feature_bc_matrix.h5')
-withoutN <- Read10X(data.dir = 'filtered_feature_bc_matrix/')
-str(withoutN)
-
-pr1 <- CreateSeuratObject(counts = withoutN, project = "pr1", min.cells = 3, min.features = 200)
-class(pr1) #seurat object
-pr1
-#An object of class Seurat 
-#24225 features across 2777 samples within 1 assay 
-#Active assay: RNA (24225 features, 0 variable features)
-
-colnames(pr1[]) #barcodes
-rownames(pr1[]) #genes
-#making sure the colnames are barcodes and rownames are gene names(24k)
-
-view(pr1)
-view(pr1@meta.data)
-#barcode,#projectname,#ncount_RNA,nfeature_RNA
-
-#save seurat object
-#saveRDS(pr1, file="/Users/subhashmahamkali/Desktop/pr1.RDS")
-#pr1 <- readRDS("/Users/subhashmahamkali/Desktop/pr1.RDS")
-pr1
-
-VlnPlot(pr1s, features = c("nFeature_RNA", "nCount_RNA"), ncol = 2)
-
-pr1s <- subset(pr1, subset = nFeature_RNA > 400 & nFeature_RNA < 5000)
-#An object of class Seurat 
-#24225 features across 2490 samples within 1 assay 
-#Active assay: RNA (24225 features, 0 variable features)
-#1 layer present: counts
-
-#quality control and selecting cells for further analysis
-#data normalization
-range(pr1$nFeature_RNA)
-range(pr1$nCount_RNA)
-
-#store mitovhondrial percentage in object meta data (percentahe pf mitochroa genes for each cell.)
-pr1[["percent.mt"]] <- PercentageFeatureSet(pr1, pattern = "^MT-")
-view(pr1@meta.data)
-range(pr1$percent.mt)
-str(pr1)
-
-FeatureScatter(pr1, feature1 = "nCount_RNA", feature2 = "nFeature_RNA") +
-  geom_smooth(method = 'lm')
-#reason-good quality cells should not only have good number of genes detected but also good number of molecules detected as well.
-
-
-#to compare the gene exp across multiple cells we needto normalize data
-#divide the gene exp measurement in each cell by the total expression  multiply it by scale factor ans log transfprm it 
-#nsclc.seurat.obj <- NormalizeData(nsclc.seurat.obj, normalization.method = "LogNormalize", scale.factor = 10000)
-pr1s <- NormalizeData(pr1s)
-str(pr1s) #can also check what commands are appended.
-
-# 4. Identify highly variable features --------------
-pr1s<- FindVariableFeatures(pr1s, selection.method = "vst", nfeatures = 2000) #default
-
-# Identify the 10 most highly variable genes
-top10 <- head(VariableFeatures(pr1s), 10)
-#"Zm00001eb090910" "Zm00001eb173060" "Zm00001eb372230" "Zm00001eb026630" "Zm00001eb187430" "Zm00001eb065710" "Zm00001eb022730" "Zm00001eb335210" "Zm00001eb123470" "Zm00001eb397370"
-
-# plot variable features with and without labels
-plot1 <- VariableFeaturePlot(pr1s)
-LabelPoints(plot = plot1, points = top10, repel = TRUE)
-
-# 5. Scaling -------------
-
-#in sc RNAseq dataset there are many unwanted sources of variantion these could be a technical noise (bath effects) or biological source (due to differnce in  cell cycle )
-# account for these sources of variation so that in down stream analysis so that cells dont cluster due to these variation and tehy cluster due to actual biological simmilarity or biological effect
-all.genes <- rownames(pr1s)
-pr1s <- ScaleData(pr1s, features = all.genes)
-str(pr1s)
-#counts _ raw sparse matrix
-#data _ log noralize counts
-#scale.data _ scaled data
-
-# 6. Perform Linear dimensionality reduction --------------
-#dimensionality reduction
-#PCA - to identify the sources of hetrogenity in our dataset
-
-pr1s <- RunPCA(pr1s, features = VariableFeatures(object = pr1s)) #default of 2000.variable genes
-#first 5 PCs and genes that have +ve and -ve PCA scores
-
-# visualize PCA results
-print(pr1s[["pca"]], dims = 1:5, nfeatures = 5) #see top 5 PCs and 5 genes in +ve and -ve in each of 5
-DimHeatmap(pr1s, dims = 1, cells = 500, balanced = TRUE) #plotting for one pc and 500 cells
-# determine dimensionality of the data(#choosing significant PCs that capture majority of signals)
-ElbowPlot(pr1s)
-
-
-
-
-# 7. Clustering ------------
-#cluster similar cells
-#cells with similar expression parents
-
-pr1s <- FindNeighbors(pr1s, dims = 1:15) #15 pcs - most variation is captured in our dataset
-
-# understanding resolution
-#in this step we want cells to be asigned to the clusters. for the res here defines granularity and resoultion of the clusters
-pr1s <- FindClusters(pr1s, resolution = c(0.1,0.2,0.3, 0.5, 0.7, 1)) #low number - less clusters and high numnber - more clusters -trail and error.
-View(pr1s@meta.data)
-
-DimPlot(pr1s, group.by = "RNA_snn_res.0.3", label = TRUE)
-
-# setting identity of clusters
-Idents(pr1s)
-Idents(pr1s) <- "RNA_snn_res.0.3"
-Idents(pr1s)
-
-# non-linear dimensionality reduction --------------
-# If you haven't installed UMAP, you can do so via reticulate::py_install(packages =
-# 'umap-learn')
-pr1s <- RunUMAP(pr1s, dims = 1:15)
-# note that you can set `label = TRUE` or use the LabelClusters function to help label
-# individual clusters
-DimPlot(pr1s, reduction = "umap")
-
-
-
-
-
-
-#finding mitochondrial geens in gtf
-mito_genes <- gtf[grepl("mitochondrial", mcols(gtf)$gene_biotype, ignore.case = TRUE)]
-mito_gene_ids <- mcols(mito_genes)$gene_id
-pr1[["percent.mt"]] <- PercentageFeatureSet(pr1, features = mito_gene_ids)
-view(pr1@meta.data)
-#vid-3
-merged <- merge(pr1, y = c(pr2),
-                add.cell.ids = ls()[1:2],
-                project = 'merged')
-  
-
-```
-
-
-
-
-
-
-```{r}
 #load libraries
 library(Seurat)
 library(ggplot2)
 library(tidyverse)
+library(dplyr)
 library(gridExtra)
 
-# get data location
-dirs <- list.dirs(path = '/Users/subhashmahamkali/Downloads/sc_RNA_seq/', recursive = F, full.names = F)
+# reading both with N and W.out N data 
+dirs <- list.dirs(path = '/Users/subhashmahamkali/Downloads/sc_RNA_seq', recursive = F, full.names = F)
 for(x in dirs){ 
   name <- gsub('_filtered_feature_bc_matrix','', x)
   
@@ -271,23 +131,38 @@ for(x in dirs){
   
   # create seurat objects
   assign(name, CreateSeuratObject(counts = cts, min.cells = 3, min.features = 200))
-  }
+}
+
 N
+#An object of class Seurat 
+#24288 features across 2842 samples within 1 assay 
+#Active assay: RNA (24288 features, 0 variable features)
+#1 layer present: counts
+
 WN
+#An object of class Seurat 
+#24225 features across 2777 samples within 1 assay 
+#Active assay: RNA (24225 features, 0 variable features)
+#1 layer present: counts
+
+#grep("^mt-", rownames(N@assays$RNA@data), value = T) -#need to filterout mitochondria and chloroplast genes - not done yet.
 
 features_N <- rownames(N)
 features_WN <- rownames(WN)
-common_features <- intersect(features_N, features_WN)
+common_features <- intersect(features_N, features_WN) #finding the common genes between both datasets and then filtering with these genes alone.
 N <- subset(N, features = common_features)
 WN <- subset(WN, features = common_features)
-
 
 # merge datasets
 merged_seurat <- merge(N, y = c(WN),
       add.cell.ids = c("N", "WN"),
       project = 'NI')
 merged_seurat
-
+#An object of class Seurat 
+#23435 features across 5619 samples within 1 assay 
+#Active assay: RNA (23435 features, 0 variable features)
+#2 layers present: counts.1, counts.2
+ 
 # QC & filtering -----------------------
 View(merged_seurat@meta.data)
 # create a sample column
@@ -295,8 +170,8 @@ merged_seurat$sample <- rownames(merged_seurat@meta.data)
 # split sample column
 merged_seurat@meta.data <- separate(merged_seurat@meta.data, col = 'sample', into = c('Treatment', 'Barcode'), 
          sep = '_')
-# calculate mitochondrial percentage
-merged_seurat$mitoPercent <- PercentageFeatureSet(merged_seurat, pattern='^MT-')
+
+#merged_seurat$mitoPercent <- PercentageFeatureSet(merged_seurat, pattern='^MT-') #not done yet, need to filt
 #v = VlnPlot(merged_seurat, features = c("nFeature_RNA", "nCount_RNA"), ncol = 2)
 v1 = VlnPlot(merged_seurat, features = c("nFeature_RNA"))+ NoLegend()
 v2 = VlnPlot(merged_seurat, features = c("nCount_RNA"))+ NoLegend()
@@ -305,18 +180,22 @@ v2 = VlnPlot(merged_seurat, features = c("nCount_RNA"))+ NoLegend()
 # filtering
 merged_seurat_filtered <- subset(merged_seurat, subset = nFeature_RNA > 400 & nFeature_RNA < 5000)
 merged_seurat_filtered
-merged_seurat
-#v2 = VlnPlot(merged_seurat_filtered, features = c("nFeature_RNA", "nCount_RNA"), ncol = 2)
+#An object of class Seurat 
+#23435 features across 5093 samples within 1 assay 
+#Active assay: RNA (23435 features, 0 variable features)
+#2 layers present: counts.1, counts.2
+
 v3 = VlnPlot(merged_seurat_filtered, features = c("nFeature_RNA"))+ NoLegend()
 v4 = VlnPlot(merged_seurat_filtered, features = c("nCount_RNA"))+ NoLegend()
-grid.arrange(v1,v2,v3,v4, ncol = 2, nrow = 2)
+vgrid <- grid.arrange(v1,v2,v3,v4, ncol = 2, nrow = 2)
+ggsave("graphs/SC_QC.pdf", vgrid, width = 15, height = 10)
 
 range(merged_seurat_filtered$nFeature_RNA)
-#402 4995
+#402 4995 -range of unique number of genes per cell
 
-FeatureScatter(merged_seurat_filtered, feature1 = "nCount_RNA", feature2 = "nFeature_RNA") +
+scatp <- FeatureScatter(merged_seurat_filtered, feature1 = "nCount_RNA", feature2 = "nFeature_RNA") +
   geom_smooth(method = 'lm')
-
+ggsave("graphs/scaterplot.pdf", scatp, width = 15, height = 10)
 
 # perform standard workflow steps to figure out if we see any batch effects --------
 merged_seurat_filtered <- NormalizeData(object = merged_seurat_filtered)
@@ -326,15 +205,23 @@ top10 <- head(VariableFeatures(merged_seurat_filtered), 10)
 #"Zm00001eb173060" "Zm00001eb090910" "Zm00001eb065710" "Zm00001eb373190" "Zm00001eb335210" "Zm00001eb249210" "Zm00001eb026630" "Zm00001eb123800" "Zm00001eb372230" "Zm00001eb266840"
 # plot variable features with and without labels
 plot1 <- VariableFeaturePlot(merged_seurat_filtered)
-LabelPoints(plot = plot1, points = top10, repel = TRUE)
+plot2 <- LabelPoints(plot = plot1, points = top10, repel = TRUE)
+ggsave("graphs/variable_features.pdf", plot2, width = 15, height = 10) #top 10 labeled and 2000(red color) variable genes
 
 merged_seurat_filtered <- ScaleData(object = merged_seurat_filtered)
-merged_seurat_filtered <- RunPCA(object = merged_seurat_filtered, npcs = 30)
-ElbowPlot(merged_seurat_filtered, ndims = 30)
+merged_seurat_filtered <- RunPCA(object = merged_seurat_filtered, npcs = 50)
+eplot <- ElbowPlot(merged_seurat_filtered, ndims = 50) + geom_vline(xintercept = 27, color = "red", linetype = "dashed") #27 pcs according to the paper
+ggsave("graphs/elbow_plot.pdf", eplot, width = 15, height = 10)
+
+#LabelPoints(plot = plot1, points = top10, repel = TRUE)
 
 merged_seurat_filtered <- FindNeighbors(object = merged_seurat_filtered, dims = 1:27)
 merged_seurat_filtered <- FindClusters(object = merged_seurat_filtered)
 View(merged_seurat_filtered@meta.data)
+
+merged_seurat_filtered <- FindClusters(object = merged_seurat_filtered, resolution = c(0.1,0.2,0.3, 0.5, 0.7, 10))
+DimPlot(merged_seurat_filtered, group.by = "RNA_snn_res.0.3", label = TRUE)
+
 #merged_seurat_filtered <- FindClusters(object = merged_seurat_filtered, resolution = c(0.1,0.2,0.3, 0.5, 0.7, 10))
 #DimPlot(merged_seurat_filtered, group.by = "RNA_snn_res.0.3", label = TRUE)
 #Idents(pr1s) <- "RNA_snn_res.0.3"
@@ -343,7 +230,8 @@ merged_seurat_filtered <- RunUMAP(object = merged_seurat_filtered, dims = 1:27)
 
 # plot
 p <- DimPlot(merged_seurat_filtered, reduction = 'umap', group.by = 'Treatment',
-        cols = c('red','green','blue'))
+        cols = c('red','green'))+ ggtitle("Before integration and batch correction")
+
 
 # perform integration to correct for batch effects ------
 obj.list <- SplitObject(merged_seurat_filtered, split.by = 'Treatment')
@@ -367,31 +255,27 @@ ElbowPlot(merged_seurat_filtered, ndims = 30)
 seurat.integrated <- RunUMAP(object = seurat.integrated, dims = 1:27)
 
 p2 <- DimPlot(seurat.integrated, reduction = 'umap', group.by = 'Treatment',
-              cols = c('red','green','blue'))
-grid.arrange(p, p2, ncol = 2)
+              cols = c('red','green')) + ggtitle("After integration and batch correction")
 
+Tumap <- grid.arrange(p, p2, ncol = 2)
+ggsave("graphs/T2UMAP.pdf", Tumap, width = 15, height = 10)
 
-
-# 7. Clustering ------------
+#Clustering ------------
 #cluster similar cells
 #cells with similar expression parents
 
-seurat.integrated <- FindNeighbors(seurat.integrated, dims = 1:27) #15 pcs - most variation is captured in our dataset
-
+seurat.integrated <- FindNeighbors(seurat.integrated, dims = 1:27) #most variation is captured in our dataset
 # understanding resolution
 #in this step we want cells to be asigned to the clusters. for the res here defines granularity and resoultion of the clusters
 seurat.integrated <- FindClusters(seurat.integrated, resolution = c(0.1,0.2,0.3, 0.5, 0.7, 1)) #low number - less clusters and high numnber - more clusters -trail and error.
-
-DimPlot(seurat.integrated, group.by = "RNA_snn_res.0.3", label = TRUE)
+view(seurat.integrated@meta.data)
+DimPlot(seurat.integrated, reduction = "umap", group.by = "RNA_snn_res.0.3", label = TRUE)
 
 # setting identity of clusters
 Idents(seurat.integrated)
 Idents(seurat.integrated) <- "RNA_snn_res.0.3"
-Idents(seurat.integrated)
 
-# non-linear dimensionality reduction --------------
-# If you haven't installed UMAP, you can do so via reticulate::py_install(packages =
-# 'umap-learn')
+# non-linear dimensionality reduction
 seurat.integrated <- RunUMAP(seurat.integrated, dims = 1:27)
 # note that you can set `label = TRUE` or use the LabelClusters function to help label
 # individual clusters
@@ -400,117 +284,75 @@ levels(seurat.integrated)
 desired_order <- c("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10")
 seurat.integrated@active.ident <- factor(seurat.integrated@active.ident, levels = desired_order)
 print(levels(seurat.integrated))
-DimPlot(seurat.integrated, reduction = "umap", label = TRUE)
+umap1 <- DimPlot(seurat.integrated, reduction = "umap", label = TRUE)
+
+markers <- FindAllMarkers(seurat.integrated, test.use = "bimod", logfc.threshold = 1)
+top_markers_all <- markers %>% group_by(cluster) %>% top_n(n = 11, wt = avg_log2FC)
+top_markers_all
+
+#gene_search <- markers %>% filter(gene == "Zm00001eb137050")
+#gene_search <- markers %>% filter(gene %in% filtered_data1$v5.Gene.Model.ID) #filt
+#gene_search
+#Top <- top_markers_all %>% filter(gene %in% filtered_data1$v5.Gene.Model.ID)
+
+zero <- FeaturePlot(seurat.integrated, c("Zm00001eb175860"), min.cutoff = 'q10') + ggtitle("cluster0(stele)") 
+one <- FeaturePlot(seurat.integrated, c("Zm00001eb429560"), min.cutoff = 'q10') + ggtitle("cluster1(cortex)") 
+two <- FeaturePlot(seurat.integrated, c("Zm00001eb152160"), min.cutoff = 'q10') + ggtitle("cluster2(CC)")
+#three <- FeaturePlot(seurat.integrated, c("Zm00001eb152160"), min.cutoff = 'q10') + ggtitle("Zm00001eb152160 - cluster2(CC)")
+four <- FeaturePlot(seurat.integrated, c("Zm00001eb091170"), min.cutoff = 'q10') + ggtitle("luster4(root cap)")
+five <- FeaturePlot(seurat.integrated, c("Zm00001eb199490"), min.cutoff = 'q10') + ggtitle("luster5(exodermis)")
+six <- FeaturePlot(seurat.integrated, c("Zm00001eb137050"), min.cutoff = 'q10') + ggtitle("cluster6(epidermis)")
+seven <- FeaturePlot(seurat.integrated, c("Zm00001eb173060"), min.cutoff = 'q10') + ggtitle("cluster7(protophloem_sieve)")
+eight <- FeaturePlot(seurat.integrated, c("Zm00001eb187430"), min.cutoff = 'q10') + ggtitle("cluster8(pericycle)")
+nine <- FeaturePlot(seurat.integrated, c("Zm00001eb025100"), min.cutoff = 'q10') + ggtitle("cluster9(root hair)")
+ten <- FeaturePlot(seurat.integrated, c("Zm00001eb080730"), min.cutoff = 'q10') + ggtitle("cluster10(endodermis)")
 
 
-```
+pgrid <- grid.arrange(zero, one, two, four, five, six, seven, eight, nine, ten,  ncol = 5 )
+ggsave("graphs/SC_feature_plots.pdf", pgrid, width = 15, height = 10)
 
+#0-Zm00001eb175860
+#1-Zm00001eb429560
+#2-Zm00001eb152160
+#4-Zm00001eb091170
+#5-Zm00001eb199490
+#6-Zm00001eb137050
+#7-Zm00001eb173060 
+#8-Zm00001eb187430
+#9-Zm00001eb025100
+#10-Zm00001eb080730
+#GLR1: glutamic acid and lysine-rich1  Zm00001eb119130
 
+DefaultAssay(seurat.integrated)
+DefaultAssay(seurat.integrated) <- "RNA"
+seurat.integrated <- JoinLayers(seurat.integrated)
+DefaultAssay(seurat.integrated) <- "integrated"
+new.cluster.ids <- c("0- Stele",
+                     "1- cortex",
+                     "2- CC",
+                     "3- mz",
+                     "4- root cap",
+                     "5- exodermis",
+                     "6- epidermis",
+                     "7- protophloem_sive",
+                     "8- pericycle",
+                     "9- root hair",
+                     "10- endodermis")
+seu.labeled <- seurat.integrated
+names(new.cluster.ids) <- levels(seu.labeled)
+seu.labeled <- RenameIdents(seu.labeled, new.cluster.ids)
+umap2 <- DimPlot(seu.labeled, label = T)
 
+# Get the cluster identities of each cell
+cluster_counts <- table(Idents(seurat.integrated))
+# Display the number of cells in each cluster
+print(cluster_counts)
+new.cluster.ids <- paste0(new.cluster.ids, " (", cluster_counts, ")")
+names(new.cluster.ids) <- levels(seurat.integrated)
+seu.labeled <- RenameIdents(seurat.integrated, new.cluster.ids)
+# Plot the UMAP with the updated labels
+umap3 <- DimPlot(seu.labeled, label = TRUE, label.size = 4)
+ggsave("graphs/clustered_umap.pdf", umap3, width = 15, height = 10)
 
-
-```{r}
-
-
-# merge datasets
-merged_seurat <- merge(withN, y = c(withoutN),
-      add.cell.ids = ls()[1:2], #which cell barcodes from which dataset
-      project = 'MG')
-merged_seurat
-#An object of class Seurat 
-#25078 features across 5619 samples within 1 assay 
-#Active assay: RNA (25078 features, 0 variable features)
-#2 layers present: counts.pr2, counts.pr1
-view(merged_seurat@meta.data)
-
-# QC & filtering -----------------------
-
-View(merged_seurat@meta.data)
-# create a sample column
-merged_seurat$sample <- rownames(merged_seurat@meta.data)
-
-# split sample column
-merged_seurat@meta.data <- separate(merged_seurat@meta.data, col = 'sample', into = c('Treatment', 'Barcode'), sep = '_')
-
-# calculate mitochondrial percentage
-merged_seurat$mitoPercent <- PercentageFeatureSet(merged_seurat, pattern='^MT-')
-# calculate chloroplst genes percentage
-merged_seurat$mitoPercent <- PercentageFeatureSet(merged_seurat, pattern='^MT-')
-
-# explore QC
-
-view(merged_seurat_filtered@meta.data)
-# filtering
-merged_seurat_filtered <- subset(merged_seurat, subset = nFeature_RNA > 400 & nFeature_RNA < 5000)
-merged_seurat_filtered
-#An object of class Seurat 
-#25078 features across 5093 samples within 1 assay 
-#Active assay: RNA (25078 features, 0 variable features)
-#2 layers present: counts.pr2, counts.pr1
-merged_seurat
-#before filter
-
-#before we perform integration we need to know wheather we need integratio or not by looking at batch effects) so in order to do that we need to explore the data in low dimensional space.
-# perform standard workflow steps to figure out if we see any batch effects --------
-merged_seurat_filtered <- NormalizeData(object = merged_seurat_filtered)
-merged_seurat_filtered <- FindVariableFeatures(object = merged_seurat_filtered)
-merged_seurat_filtered <- ScaleData(object = merged_seurat_filtered)
-merged_seurat_filtered <- RunPCA(object = merged_seurat_filtered, npcs = 30) #linear dimensonality reduction
-ElbowPlot(merged_seurat_filtered, ndims = 30)
-merged_seurat_filtered <- FindNeighbors(object = merged_seurat_filtered, dims = 1:27)
-merged_seurat_filtered <- FindClusters(object = merged_seurat_filtered) #non-linear dimensionaliy reduction
-merged_seurat_filtered <- RunUMAP(object = merged_seurat_filtered, dims = 1:27)
-
-
-# plot
-p1 <- DimPlot(merged_seurat_filtered, reduction = 'umap', group.by = 'Treatment',
-        cols = c('red','green'))
-p1
-#grid.arrange(p1, p2, ncol = 2, nrow = 2)
-
-obj_withN <- subset(merged_seurat_filtered, subset = Treatment == 'withN')
-obj_withoutN <- subset(merged_seurat_filtered, subset = Treatment == 'withoutN')
-str(obj_withN)
-str(obj_withoutN)
-# Re-integrate
-obj.list <- list(obj_withN, obj_withoutN)
-
-
-# perform integration to correct for batch effects ------
-obj.list <- SplitObject(merged_seurat_filtered, split.by = 'Treatment')
-obj.list
-for(i in 1:length(obj.list)){
-  obj.list[[i]] <- NormalizeData(object = obj.list[[i]])
-  obj.list[[i]] <- FindVariableFeatures(object = obj.list[[i]])
-}
-
-# select integration features
-features <- SelectIntegrationFeatures(object.list = obj.list)
-
-# find integration anchors (CCA)
-anchors <- FindIntegrationAnchors(object.list = obj.list,
-                       anchor.features = features)
-
-# integrate data
-seurat.integrated <- IntegrateData(anchorset = anchors)
-
-
-# Scale data, run PCA and UMAP and visualize integrated data
-seurat.integrated <- ScaleData(object = seurat.integrated)
-seurat.integrated <- RunPCA(object = seurat.integrated)
-seurat.integrated <- RunUMAP(object = seurat.integrated, dims = 1:50)
-
-
-p3 <- DimPlot(seurat.integrated, reduction = 'umap', group.by = 'Patient')
-p4 <- DimPlot(seurat.integrated, reduction = 'umap', group.by = 'Type',
-              cols = c('red','green','blue'))
-
-
-grid.arrange(p1, p2, p3, p4, ncol = 2, nrow = 2)
-
-
-  cts <- ReadMtx(mtx = paste0('/Users/subhashmahamkali/Downloads/sc_RNA_seq/N_filtered_feature_bc_matrix/matrix.mtx.gz'),
-         features = paste0('/Users/subhashmahamkali/Downloads/sc_RNA_seq/N_filtered_feature_bc_matrix/features.tsv.gz'),
-         cells = paste0('/Users/subhashmahamkali/Downloads/sc_RNA_seq/N_filtered_feature_bc_matrix/barcodes.tsv.gz'))
 ```
 
