@@ -365,5 +365,78 @@ seu.labeled <- RenameIdents(seurat.integrated, new.cluster.ids)
 umap3 <- DimPlot(seu.labeled, label = TRUE, label.size = 4)
 ggsave("graphs/clustered_umap.pdf", umap3, width = 15, height = 10)
 
+
+
+#glr1(glutamic acid- and lysine-rich1): Zm00001eb119130 expression in cell types
+glr <- FeaturePlot(seurat.integrated, c("Zm00001eb119130"), min.cutoff = 'q10') + ggtitle("glr1(glutamic acid- and lysine-rich1)") 
+ggsave("graphs/glr.png", glr, width = 15, height = 10)
+
+
+#0-
+#1-
+#2-
+#4-
+#5-
+#6-
+#7- 
+#8-
+#9-
+#10-
+
+cluster_specific_genes <- c("Zm00001eb175860", "Zm00001eb429560","Zm00001eb152160", "Zm00001eb091170", "Zm00001eb199490", "Zm00001eb137050", "Cd209a", "Clec4a4", "Zm00001eb173060", "Zm00001eb187430", "Zm00001eb025100", "Zm00001eb080730")
+# can use a RColorBrewer pallete, I chose RdBu here
+knownmarker <- DotPlot(seurat.integrated, features = rev(cluster_specific_genes), cols = "RdBu") + theme(axis.text.x = element_text( angle = 90, vjust = 0.5, hjust = 1))
+ggsave("graphs/known_markers.png", knownmarker, width = 15, height = 10)
+```
+
+
+```{r}
+#GLR gene expression 
+
+#{ZmGLR3.4
+#Zm00001eb225110
+#Zm00001eb225150
+#Zm00001eb225130}
+
+ZmGLR3.4_1 <- FeaturePlot(seurat.integrated, c("Zm00001eb225110"), min.cutoff = 'q10') + ggtitle("ZmGLR3.4_1") 
+ZmGLR3.4_2 <- FeaturePlot(seurat.integrated, c("Zm00001eb225150"), min.cutoff = 'q10') + ggtitle("ZmGLR3.4_2") 
+ZmGLR3.4_3 <- FeaturePlot(seurat.integrated, c("Zm00001eb225130"), min.cutoff = 'q10') + ggtitle("ZmGLR3.4_3") 
+ZmGLR3.4 <- grid.arrange(ZmGLR3.4_1, ZmGLR3.4_2, ZmGLR3.4_3, ncol = 3 )
+ggsave("graphs/ZmGLR3.4.pdf", ZmGLR3.4, width = 15, height = 5)
+
+
+
+#{ZmGLR3.5
+#Zm00001eb106130
+#Zm00001eb298150}
+ZmGLR3.5_1 <- FeaturePlot(seurat.integrated, c("Zm00001eb106130"), min.cutoff = 'q10') + ggtitle("ZmGLR3.5_1") 
+ZmGLR3.5_2 <- FeaturePlot(seurat.integrated, c("Zm00001eb298150"), min.cutoff = 'q10') + ggtitle("ZmGLR3.5_2") 
+ZmGLR3.5 <- grid.arrange(ZmGLR3.5_1, ZmGLR3.5_2, ncol = 3 )
+ggsave("graphs/ZmGLR3.5.pdf", ZmGLR3.5, width = 15, height = 5)
+
+
+#{ZmGLR3.3
+#Zm00001eb072720
+#Zm00001eb230060
+#Zm00001eb209370}
+
+#{ZmGLR3.7
+#Zm00001eb192720
+#Zm00001eb257400}
+
+
+#Zm00001eb099820: ZmGLR2.7c
+#Zm00001eb313570: ZmGLR2.7b
+
+#Zm00001eb313550: ZmGLR2
+
+
+
+
+
+
+
+
+
 ```
 
