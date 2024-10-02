@@ -397,46 +397,135 @@ ggsave("graphs/known_markers.png", knownmarker, width = 15, height = 10)
 #Zm00001eb225110
 #Zm00001eb225150
 #Zm00001eb225130}
-
-ZmGLR3.4_1 <- FeaturePlot(seurat.integrated, c("Zm00001eb225110"), min.cutoff = 'q10') + ggtitle("ZmGLR3.4_1") 
-ZmGLR3.4_2 <- FeaturePlot(seurat.integrated, c("Zm00001eb225150"), min.cutoff = 'q10') + ggtitle("ZmGLR3.4_2") 
-ZmGLR3.4_3 <- FeaturePlot(seurat.integrated, c("Zm00001eb225130"), min.cutoff = 'q10') + ggtitle("ZmGLR3.4_3") 
+ZmGLR3.4_1 <- FeaturePlot(seurat.integrated, c("Zm00001eb225110"), min.cutoff = 'q10') + ggtitle("ZmGLR3.4_1(Zm00001eb225110)") 
+ZmGLR3.4_2 <- FeaturePlot(seurat.integrated, c("Zm00001eb225150"), min.cutoff = 'q10') + ggtitle("ZmGLR3.4_2(Zm00001eb225150)") 
+ZmGLR3.4_3 <- FeaturePlot(seurat.integrated, c("Zm00001eb225130"), min.cutoff = 'q10') + ggtitle("ZmGLR3.4_3(Zm00001eb225130)") 
 ZmGLR3.4 <- grid.arrange(ZmGLR3.4_1, ZmGLR3.4_2, ZmGLR3.4_3, ncol = 3 )
-ggsave("graphs/ZmGLR3.4.pdf", ZmGLR3.4, width = 15, height = 5)
-
-
+ggsave("graphs/GLR/ZmGLR3.4.pdf", ZmGLR3.4, width = 15, height = 5)
 
 #{ZmGLR3.5
 #Zm00001eb106130
 #Zm00001eb298150}
-ZmGLR3.5_1 <- FeaturePlot(seurat.integrated, c("Zm00001eb106130"), min.cutoff = 'q10') + ggtitle("ZmGLR3.5_1") 
-ZmGLR3.5_2 <- FeaturePlot(seurat.integrated, c("Zm00001eb298150"), min.cutoff = 'q10') + ggtitle("ZmGLR3.5_2") 
+ZmGLR3.5_1 <- FeaturePlot(seurat.integrated, c("Zm00001eb106130"), min.cutoff = 'q10') + ggtitle("ZmGLR3.5_1(Zm00001eb106130)") 
+ZmGLR3.5_2 <- FeaturePlot(seurat.integrated, c("Zm00001eb298150"), min.cutoff = 'q10') + ggtitle("ZmGLR3.5_2(Zm00001eb298150)") 
 ZmGLR3.5 <- grid.arrange(ZmGLR3.5_1, ZmGLR3.5_2, ncol = 3 )
-ggsave("graphs/ZmGLR3.5.pdf", ZmGLR3.5, width = 15, height = 5)
-
+ggsave("graphs/GLR/ZmGLR3.5.pdf", ZmGLR3.5, width = 15, height = 5)
 
 #{ZmGLR3.3
 #Zm00001eb072720
 #Zm00001eb230060
 #Zm00001eb209370}
+#ZmGLR3.3_1 <- FeaturePlot(seurat.integrated, c("Zm00001eb072720"), min.cutoff = 'q10') + ggtitle("ZmGLR3.3_1(Zm00001eb072720)"): Not found 
+ZmGLR3.3_2 <- FeaturePlot(seurat.integrated, c("Zm00001eb230060"), min.cutoff = 'q10') + ggtitle("ZmGLR3.3_2(Zm00001eb230060)") 
+ZmGLR3.3_3 <- FeaturePlot(seurat.integrated, c("Zm00001eb209370"), min.cutoff = 'q10') + ggtitle("ZmGLR3.3_3(Zm00001eb209370)") 
+ZmGLR3.3 <- grid.arrange(ZmGLR3.3_2, ZmGLR3.3_3, ncol = 3 )
+ggsave("graphs/GLR/ZmGLR3.3.pdf", ZmGLR3.3, width = 15, height = 5)
 
 #{ZmGLR3.7
 #Zm00001eb192720
 #Zm00001eb257400}
+#ZmGLR3.7_1 <- FeaturePlot(seurat.integrated, c("Zm00001eb192720"), min.cutoff = 'q10') + ggtitle("ZmGLR3.5_1(Zm00001eb192720)"): Not found 
+ZmGLR3.7_2 <- FeaturePlot(seurat.integrated, c("Zm00001eb257400"), min.cutoff = 'q10') + ggtitle("ZmGLR3.7_2(Zm00001eb257400)") 
+ZmGLR3.7 <- grid.arrange(ZmGLR3.7_2, ncol = 3 )
+ggsave("graphs/GLR/ZmGLR3.7.pdf", ZmGLR3.7, width = 15, height = 5)
 
-
-#Zm00001eb099820: ZmGLR2.7c
-#Zm00001eb313570: ZmGLR2.7b
+#{Zm00001eb099820: ZmGLR2.7c
+#Zm00001eb313570: ZmGLR2.7b}
+ZmGLR2.7c <- FeaturePlot(seurat.integrated, c("Zm00001eb099820"), min.cutoff = 'q10') + ggtitle("ZmGLR2.7c(Zm00001eb099820)") 
+#ZmGLR2.7b <- FeaturePlot(seurat.integrated, c("Zm00001eb313570"), min.cutoff = 'q10') + ggtitle("ZmGLR2.7b(Zm00001eb313570)"): Not found 
+ZmGLR2.7 <- grid.arrange(ZmGLR2.7c, ncol = 3 )
+ggsave("graphs/ZmGLR2.7.pdf", ZmGLR2.7, width = 15, height = 5)
 
 #Zm00001eb313550: ZmGLR2
+#ZmGLR2 <- FeaturePlot(seurat.integrated, c("Zm00001eb313550"), min.cutoff = 'q10') + ggtitle("ZmGLR2.7c(Zm00001eb313550)"): Not found 
+#ggsave("graphs/ZmGLR2.pdf", ZmGLR2, width = 15, height = 5)
 
 
+#{ZmGLR3.4
+#Zm00001eb225110
+#Zm00001eb225150
+#Zm00001eb225130}
+ZmGLR3.4_1 <- FeaturePlot(seurat.integrated, c("Zm00001eb225110"), min.cutoff = 'q10') + ggtitle("ZmGLR3.4_1(Zm00001eb225110)") 
+ZmGLR3.4_2 <- FeaturePlot(seurat.integrated, c("Zm00001eb225150"), min.cutoff = 'q10') + ggtitle("ZmGLR3.4_2(Zm00001eb225150)") 
+ZmGLR3.4_3 <- FeaturePlot(seurat.integrated, c("Zm00001eb225130"), min.cutoff = 'q10') + ggtitle("ZmGLR3.4_3(Zm00001eb225130)") 
+ZmGLR3.4 <- grid.arrange(ZmGLR3.4_1, ZmGLR3.4_2, ZmGLR3.4_3, ncol = 3 )
+ggsave("graphs/GLR/ZmGLR3.4.pdf", ZmGLR3.4, width = 15, height = 5)
 
+data <- read.table("/Users/subhashmahamkali/Downloads/GLR_mutants_vs_WT_TF_DEGs_summarized.txt", header = T)
+gene_column <- data$Gene  # Replace 'gene' with the actual column name
 
+# Create a list to store the plots
+plots <- list()
 
+# Loop through each gene in the gene column
+for (i in seq_along(gene_column)) {
+  gene_id <- gene_column[i]
+  
+# Create the FeaturePlot for the current gene
+plot <- FeaturePlot(seurat.integrated, c(gene_id), min.cutoff = 'q10') + 
+          ggtitle(paste0("Gene_", i, "(", gene_id, ")"))
+  
+  # Add the plot to the list
+  plots[[i]] <- plot
+}
 
+# Arrange the plots into a grid (adjust 'ncol' and 'nrow' as needed)
+ZmGLR3.4_grid <- do.call(grid.arrange, c(plots, ncol = 3))
 
+# Save the grid plot to a PDF
+ggsave("graphs/GLR/Zm.pdf", ZmGLR3.4_grid, width = 15, height = 5)
 
+# Assuming 'data' contains your gene column with 353 rows
+gene_column <- data$Gene  # Replace 'Gene' with your actual column name
+
+# Create a list to store missing genes
+missing_genes <- list()
+
+# Loop through the gene column in batches of 10
+batch_size <- 10
+num_batches <- ceiling(length(gene_column) / batch_size)
+
+for (batch in 1:num_batches) {
+  
+  # Subset the gene list for the current batch
+  start_index <- (batch - 1) * batch_size + 1
+  end_index <- min(batch * batch_size, length(gene_column))
+  current_genes <- gene_column[start_index:end_index]
+  
+  # Create a list to store the plots for the current batch
+  plots <- list()
+  
+  # Loop through each gene in the current batch
+  for (i in seq_along(current_genes)) {
+    gene_id <- current_genes[i]
+    
+    # Check if the gene exists in the Seurat object using GetAssayData
+    if (gene_id %in% rownames(GetAssayData(seurat.integrated, assay = "RNA", slot = "data"))) {
+      # Create the FeaturePlot for the current gene
+      plot <- FeaturePlot(seurat.integrated, c(gene_id), min.cutoff = 'q10') +
+              ggtitle(paste0("Gene ", start_index + i - 1, " (", gene_id, ")"))
+      
+      # Add the plot to the list
+      plots[[i]] <- plot
+    } else {
+      # Log the missing gene
+      missing_genes <- c(missing_genes, gene_id)
+      message(paste("Warning: Gene", gene_id, "not found in the Seurat object. Skipping."))
+    }
+  }
+  
+  # Only create and save the grid if there are plots to show
+  if (length(plots) > 0) {
+    # Arrange the plots in a grid (adjust ncol as necessary)
+    grid_plot <- do.call(grid.arrange, c(plots, ncol = 3))
+    
+    # Save the grid of plots to a PDF file
+    ggsave(paste0("graphs/GLR/ZmGLR3.4_batch_", batch, ".pdf"), grid_plot, width = 15, height = 15)
+  }
+}
+
+# Optionally, save the list of missing genes to a file
+write.table(missing_genes, "missing_genes.txt", row.names = FALSE, col.names = FALSE)
 
 ```
 
