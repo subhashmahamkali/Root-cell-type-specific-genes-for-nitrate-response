@@ -2,3 +2,5 @@
 .Rhistory
 .RData
 .Ruserdata
+largedata/
+profiling/2.our_data/
