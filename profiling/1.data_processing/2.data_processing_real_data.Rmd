@@ -1,0 +1,199 @@
+---
+title: "SC_analysis"
+author: "subhash"
+date: "2025-02-09"
+output: html_document
+---
+
+YangLab ScRNASeq data:
+#Raw data
+mutant:/work/jyanglab/subhash/single_cell_sequencing_analysis/07GLR_single_Cell/Mut_L5-ds.719bb61f17e34e45bb7e7f1187a3c28a/
+wildtype:/work/jyanglab/subhash/single_cell_sequencing_analysis/07GLR_single_Cell/WT_L5-ds.ab5b7ce462fd422b9076bb28f1411f98/
+
+#fastqc report
+fastc report:/work/jyanglab/subhash/single_cell_sequencing_analysis/1.fastqc
+
+#cellranger outputafter alignment:
+wildtype: /work/jyanglab/subhash/single_cell_sequencing_analysis/2.cell_ranger_count/1.wild_type/wild_type/
+mutant:/work/jyanglab/subhash/single_cell_sequencing_analysis/2.cell_ranger_count/2.mutant/mutant/
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 2.4 Data analysis of scRNA-seq of Maize
+# Cell Ranger installation
+here is the [tutorials](https://www.10xgenomics.com/support/software/cell-ranger/latest/tutorials)
+```
+
+```{bash}
+cd ~/bin/
+wget -O cellranger-8.0.1.tar.gz "https://cf.10xgenomics.com/releases/cell-exp/cellranger-8.0.1.tar.gz?Expires=1723872327&Key-Pair-Id=APKAI7S6A5RYOXBWRPDA&Signature=QMT75~0APN1ylbKNNePQ6cVDlqqkgCAwzdCcX5lsc5v5QBJsMw48x4UHPYJcu8TYRJO7JF1EUkZnrQgNDae8qsUY~~wOLxckFia4gw1chgDOfW96J9ylhpNN0lOaXUy8deeiogn0NFoFMPPX67V-VjZWyJ6vo5hlySaT58sgewghGZPePoJIWXR~o78f1I7AIqOg8gQaP7AfDXROWxcd3nZTswklG1BAmRDMYQnB0zEGYYgvTxjEYDHUpjk3cuE5o7Uz0bldY9Cvw4TF~JdaXEPvH2HsTBBM~7-gZ~AlM4AwWwIM48wxAaHLR8BAxVztpSH~Kv9ftk4DJEk8rAKSjA__"
+
+tar -xvzf cellranger-8.0.1.tar.gz
+
+#export your path to .bashrc or .bash_profile
+
+cellranger testrun --id=check_install
+
+# if install successfully, you should get the below info:
+```
+
+Waiting 6 seconds for UI to do final refresh.
+Pipestance completed successfully!
+
+2024-08-16 13:49:40 Shutting down.
+Saving pipestance info to "check_install/check_install.mri.tgz"
+
+# Prepare the gene annotation file
+
+https://www.maizegdb.org/genome/assembly/Zm-B73-REFERENCE-NAM-5.0
+
+```{bash}
+# get the reference genome and annotations
+wget https://download.maizegdb.org/Zm-B73-REFERENCE-NAM-5.0/Zm-B73-REFERENCE-NAM-5.0.fa.gz
+gzip -d Zm-B73-REFERENCE-NAM-5.0.fa.gz
+
+wget https://download.maizegdb.org/Zm-B73-REFERENCE-NAM-5.0/Zm-B73-REFERENCE-NAM-5.0_Zm00001eb.1.gff3.gz
+gzip -d Zm-B73-REFERENCE-NAM-5.0_Zm00001eb.1.gff3.gz
+```
+
+# Maize GFF file
+
+```{bash}
+cellranger mkgtf -h
+cellranger mkgtf Zm-B73-REFERENCE-NAM-5.0_Zm00001eb.1.gff3 Zm-B73-REFERENCE-NAM-5.0_gene.gtf --attribute = gene
+```
+
+## preparing refrence genome
+
+```{bash}
+#converting downloaded .gff3 to .gtf using gffread
+gffread Zm-B73-REFERENCE-NAM-5.0_Zm00001eb.1.gff3 \
+-T -o Zm-B73-REFERENCE-NAM-5.0_Zm00001eb.1.gtf
+
+#creating the index for refrence using cellranger mkgtf tool
+cellranger mkgtf Zm-B73-REFERENCE-NAM-5.0_Zm00001eb.1.gtf \
+Zm-B73-REFERENCE-NAM-5.0_Zm00001eb.1_filtered.gtf \
+--attribute=gene_biotype:protein_coding
+
+```
+###quality
+
+```{bash}
+#!/usr/bin/bash
+#SBATCH --job-name=fastqc
+#SBATCH --ntasks=1
+#SBATCH --mem-per-cpu=8G
+#SBATCH --time=100:00:00
+#SBATCH --partition=jclarke,batch,guest
+#SBATCH --output=/work/jyanglab/subhash/single_cell_sequencing_analysis/1.fastqc/scripts/fastqc.out
+#SBATCH --error=/work/jyanglab/subhash/single_cell_sequencing_analysis/1.fastqc/scripts/fastqc.err
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=smahamkalivenkatas2@huskers.unl.edu
+
+ml fastqc
+Input_path="/work/jyanglab/subhash/single_cell_sequencing_analysis/07GLR_single_Cell/Mut_L5-ds.719bb61f17e34e45bb7e7f1187a3c28a/"
+Input2_path="/work/jyanglab/subhash/single_cell_sequencing_analysis/07GLR_single_Cell/WT_L5-ds.ab5b7ce462fd422b9076bb28f1411f98/"
+out="/work/jyanglab/subhash/single_cell_sequencing_analysis/1.fastqc/"
+
+fastqc ${Input_path}/*.fastq.gz ${Input2_path}/*.fastq.gz -o ${out}
+#outputlocation:/work/jyanglab/subhash/single_cell_sequencing_analysis/1.fastqc/
+```
+
+
+### alignment to refrence genome and generatig feature count matrix using cell ranger
+In our study we have 2 experimental conditions with_nitrate and without_nitrate
+
+```{bash}
+#!/usr/bin/bash
+#SBATCH --job-name=cell_ranger_wild_type
+#SBATCH --ntasks=1
+#SBATCH --mem-per-cpu=64G
+#SBATCH --time=100:00:00
+#SBATCH --partition=jclarke,batch,guest
+#SBATCH --output=/work/jyanglab/subhash/single_cell_sequencing_analysis/2.cell_ranger_count/1.wild_type/0.scripts/CR.out
+#SBATCH --error=/work/jyanglab/subhash/single_cell_sequencing_analysis/2.cell_ranger_count/1.wild_type/0.scripts/CR.err
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=smahamkalivenkatas2@huskers.unl.edu
+cd /work/jyanglab/subhash/single_cell_sequencing_analysis/2.cell_ranger_count/1.wild_type/
+#wildtype 
+cellranger count \
+  --id=wild_type \
+  --transcriptome=/work/jyanglab/subhash/3.single_cell_RNA_Seq/2.sc_RNASeq/2.refrence/Zm_B73 \
+  --fastqs=/work/jyanglab/subhash/single_cell_sequencing_analysis/07GLR_single_Cell/WT_L5-ds.ab5b7ce462fd422b9076bb28f1411f98/ \
+  --sample=WT \
+  --localcores=8 \
+  --localmem=64 \
+  --create-bam=true
+  
+  #muatnt
+cd /work/jyanglab/subhash/single_cell_sequencing_analysis/2.cell_ranger_count/2.mutant/
+
+cellranger count \
+  --id=mutant \
+  --transcriptome=/work/jyanglab/subhash/3.single_cell_RNA_Seq/2.sc_RNASeq/2.refrence/Zm_B73 \
+  --fastqs=/work/jyanglab/subhash/single_cell_sequencing_analysis/07GLR_single_Cell/Mut_L5-ds.719bb61f17e34e45bb7e7f1187a3c28a/ \
+  --sample=Mut \
+  --localcores=8 \
+  --localmem=64 \
+  --create-bam=true
+```
+
+```{r}
+#load libraries
+library(Seurat)
+library(ggplot2)
+library(tidyverse)
+library(dplyr)
+library(gridExtra)
+
+#wild_type
+#data_dir <- "/Users/subhashmahamkali/Documents/Root-cell-type-specific-genes-for-nitrate-response/data/1.single_cell_RNA_seq/1.wild_type/filtered_feature_bc_matrix/"
+
+#mutant
+data_dir <- "/Users/subhashmahamkali/Documents/Root-cell-type-specific-genes-for-nitrate-response/data/1.single_cell_RNA_seq/2.mutant/filtered_feature_bc_matrix/"
+
+# Read the count matrix, features, and barcodes
+cts <- ReadMtx(
+  mtx = paste0(data_dir, "matrix.mtx.gz"),
+  features = paste0(data_dir, "features.tsv.gz"),
+  cells = paste0(data_dir, "barcodes.tsv.gz")
+)
+
+# Create a Seurat object for wildtype
+#wt <- CreateSeuratObject(counts = cts, min.cells = 3, min.features = 200)
+#mutant
+mut<- CreateSeuratObject(counts = cts, min.cells = 3, min.features = 200)
+ 
+wt
+#An object of class Seurat 
+#24042 features across 3726 samples within 1 assay 
+#Active assay: RNA (24042 features, 0 variable features)
+#1 layer present: counts
+
+mut
+#An object of class Seurat 
+#24693 features across 4715 samples within 1 assay 
+#Active assay: RNA (24693 features, 0 variable features)
+#1 layer present: counts
+
+
+features_wt <- rownames(wt)
+features_mut <- rownames(mut)
+common_features <- intersect(features_wt, features_mut) #finding the common genes between both datasets and then filtering with these genes alone.
+wt <- subset(wt, features = common_features)
+mut <- subset(mut, features = common_features)
+
+# merge datasets
+merged_seurat <- merge(wt, y = c(mut),
+      add.cell.ids = c("wt", "mut"),
+      project = 'MZ')
+merged_seurat
+#An object of class Seurat 
+#23095 features across 8441 samples within 1 assay 
+#Active assay: RNA (23095 features, 0 variable features)
+#2 layers present: counts.1, counts.2
+
+```
